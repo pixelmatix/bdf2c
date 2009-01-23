@@ -1,5 +1,5 @@
 ///
-///	@file bdf2c.c		 BDF Font to C source converter
+///	@file bdf2c.c		 BDF Font to C source convertor
 ///
 ///	Copyright (c) 2009 by Johns.  All Rights Reserved.
 ///

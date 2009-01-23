@@ -47,5 +47,5 @@ indent:
 	done
 
 commit:
-	git-commit $(OBJS:.o=.c) $(HDRS) $(MISC)
+	git commit $(OBJS:.o=.c) $(HDRS) $(MISC)
 

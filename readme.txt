@@ -1,6 +1,6 @@
 
-My version of BDF fonts converter to C includes, which can be used to
-embed Fonts into the executable.
+My version of BDF fonts convertor to C includes, which can be used to
+embed fonts into the executable.
 
 Usage:
 	./bdf2c -c
