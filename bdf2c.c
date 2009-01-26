@@ -86,6 +86,7 @@ void PrintVersion(void)
 void PrintUsage(void)
 {
     printf("Usage: bdf2c [OPTIONs]\n" "\t-c\tCreate font header on stdout\n"
+	"\t-b\tRead bdf file from stdin\n"
 	"\t-C file\tCreate font header file\n");
     printf("\tOnly idiots print usage on stderr\n");
 }
