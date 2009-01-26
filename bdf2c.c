@@ -50,6 +50,27 @@ void CreateFontHeaderFile(FILE * out)
 //////////////////////////////////////////////////////////////////////////////
 
 //
+//	Read BDF font file.
+//
+void ReadBdf(FILE* bdf)
+{
+	char linebuf[1024];
+	char *s;
+
+	for (;;) {
+	    if ( !fgets(linebuf, sizeof(linebuf), bdf) ) {	// EOF
+		break;
+	    }
+	    if ( !(s = strtok(linebuf, " \t\n\r")) ) {		// empty line
+		break;
+	    }
+	    printf("token:%s\n", s);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+//
 //	Print version
 //
 void PrintVersion(void)
@@ -64,7 +85,10 @@ void PrintVersion(void)
 //
 void PrintUsage(void)
 {
-    printf("Usage: bdf2c [OPTIONs]\n");
+    printf("Usage: bdf2c [OPTIONs]\n"
+	"\t-c\tCreate font header on stdout\n"
+	"\t-C file\tCreate font header file\n"
+    );
     printf("\tOnly idiots print usage on stderr\n");
 }
 
@@ -77,7 +101,10 @@ int main(int argc, char *const argv[])
     //	Parse arguments.
     //
     for (;;) {
-	switch (getopt(argc, argv, "cC:h?-")) {
+	switch (getopt(argc, argv, "bcC:h?-")) {
+	    case 'b':
+		ReadBdf(stdin);
+		break;
 	    case 'c':
 		CreateFontHeaderFile(stdout);
 		break;
