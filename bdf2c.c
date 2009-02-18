@@ -48,14 +48,14 @@ void CreateFontHeaderFile(FILE * out)
     register int i;
 
     fprintf(out, "// (c) 2009 Johns, License: AGPLv3\n\n");
-    fprintf(out, "\t/// bitmap font structure\n"
-    	"struct bitmap_font {\n"
-    	"\tunsigned char Width;\t\t///< max. character width\n"
-    	"\tunsigned char Height;\t\t///< character height\n"
-    	"\tunsigned short Chars;\t\t///< number of characters in font\n"
-    	"\tunsigned char *Widths;\t\t///< width of each character\n"
-    	"\tunsigned short *Index;\t\t///< encoding to character index\n"
-    	"\tunsigned char *Bitmap;\t\t///< bitmap of each character\n"
+    fprintf(out,
+	"\t/// bitmap font structure\n" "struct bitmap_font {\n"
+	"\tunsigned char Width;\t\t///< max. character width\n"
+	"\tunsigned char Height;\t\t///< character height\n"
+	"\tunsigned short Chars;\t\t///< number of characters in font\n"
+	"\tconst unsigned char *Widths;\t///< width of each character\n"
+	"\tconst unsigned short *Index;\t///< encoding to character index\n"
+	"\tconst unsigned char *Bitmap;\t///< bitmap of each character\n"
 	"};\n\n");
 
     fprintf(out, "\t/// @{ defines to have human readable font files\n");
@@ -124,20 +124,21 @@ void EncodingTable(FILE * out, const char *name,
 void Footer(FILE * out, const char *name, int width, int height, int chars)
 {
     fprintf(out, "};\n\n");
-    fprintf(out, "\t/// bitmap font structure\n"
-    	"struct bitmap_font %s = {\n", name);
-    fprintf(out, "\t.Width %d, .Height %d,\n", width, height);
-    fprintf(out, "\t.Chars %d,\n", chars);
-    fprintf(out, "\t.Widths __%s_widths__,\n", name);
-    fprintf(out, "\t.Index __%s_index__,\n", name);
-    fprintf(out, "\t.Bitmap __%s_bitmap__,\n", name);
+    fprintf(out,
+	"\t/// bitmap font structure\n" "const struct bitmap_font %s = {\n",
+	name);
+    fprintf(out, "\t.Width = %d, .Height = %d,\n", width, height);
+    fprintf(out, "\t.Chars = %d,\n", chars);
+    fprintf(out, "\t.Widths = __%s_widths__,\n", name);
+    fprintf(out, "\t.Index = __%s_index__,\n", name);
+    fprintf(out, "\t.Bitmap = __%s_bitmap__,\n", name);
     fprintf(out, "};\n\n");
 }
 
 //
 //	Read BDF font file.
 //
-void ReadBdf(FILE * bdf)
+void ReadBdf(FILE * bdf, const char *name)
 {
     char linebuf[1024];
     char *s;
@@ -157,9 +158,7 @@ void ReadBdf(FILE * bdf)
     int width;
     unsigned *width_table;
     unsigned *encoding_table;
-    const char *name;
 
-    name = "font";
     fontboundingbox_width = 0;
     fontboundingbox_height = 0;
     chars = 0;
@@ -183,9 +182,9 @@ void ReadBdf(FILE * bdf)
 	}
     }
     /*
-    printf("%d * %dx%d\n", chars, fontboundingbox_width,
-	fontboundingbox_height);
-    */
+       printf("%d * %dx%d\n", chars, fontboundingbox_width,
+       fontboundingbox_height);
+     */
 
     if (chars <= 0) {
 	fprintf(stderr, "Need to know the number of characters\n");
@@ -309,10 +308,10 @@ void PrintVersion(void)
 //
 void PrintUsage(void)
 {
-    printf("Usage: bdf2c [OPTIONs]\n"
-	"\t-b\tRead bdf file from stdin\n"
-    	"\t-c\tCreate font header on stdout\n"
-	"\t-C file\tCreate font header file\n");
+    printf("Usage: bdf2c [OPTIONs]\n" "\t-b\tRead bdf file from stdin\n"
+	"\t-c\tCreate font header on stdout\n"
+	"\t-C file\tCreate font header file\n"
+	"\t-n name\tName of c font variable (place it before -b)\n");
     printf("\tOnly idiots print usage on stderr\n");
 }
 
@@ -321,14 +320,17 @@ void PrintUsage(void)
 //
 int main(int argc, char *const argv[])
 {
+    const char *name;
+
+    name = "font";
     //
     //	Parse arguments.
     //
     for (;;) {
-	switch (getopt(argc, argv, "bcC:h?-")) {
+	switch (getopt(argc, argv, "bcC:n:h?-")) {
 	    case 'b':
-		ReadBdf(stdin);
-		break;
+		ReadBdf(stdin, name);
+		continue;
 	    case 'c':
 		CreateFontHeaderFile(stdout);
 		break;
@@ -344,7 +346,10 @@ int main(int argc, char *const argv[])
 		CreateFontHeaderFile(out);
 		fclose(out);
 	    }
-		break;
+		continue;
+	    case 'n':
+		name = optarg;
+		continue;
 
 	    case EOF:
 		break;

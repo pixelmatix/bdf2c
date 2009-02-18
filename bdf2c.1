@@ -10,6 +10,7 @@ bdf2c \- converts bdf font files into C include files
 .I [-b file]
 .I [-c]
 .I [-C file]
+.I [-n name]
 
 .SH DESCRIPTION
 
@@ -30,6 +31,10 @@ Creates C header file 'file'.
 .TP
 .B -b file
 Read and convert bdf font 'file'.
+.TP
+.B -n name
+Name of the C font structure. 'name' should contain only valid identifier characters.  f.e. font9x15b
+
 
 .SH AUTHOR
 Johns (2009) <johns98@gmx.net>.
