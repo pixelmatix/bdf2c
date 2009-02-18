@@ -1,7 +1,7 @@
 # gitignore(5) file
 *.[oa]
 *~
-*.swp
+.*.swp
 
 # generated files
 bdf2c
