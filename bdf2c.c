@@ -36,13 +36,15 @@
 #include <limits.h>
 #include <errno.h>
 
-#define VERSION "1"
+#define VERSION "2"			///< version of this application
 
 //////////////////////////////////////////////////////////////////////////////
 
-//
-//	Create our header file.
-//
+///
+///	Create our header file.
+///
+///	@param out	File handle for output
+///
 void CreateFontHeaderFile(FILE * out)
 {
     register int i;
@@ -55,7 +57,7 @@ void CreateFontHeaderFile(FILE * out)
 	"\tunsigned short Chars;\t\t///< number of characters in font\n"
 	"\tconst unsigned char *Widths;\t///< width of each character\n"
 	"\tconst unsigned short *Index;\t///< encoding to character index\n"
-	"\tconst unsigned char *Bitmap;\t///< bitmap of each character\n"
+	"\tconst unsigned char *Bitmap;\t///< bitmap of all characters\n"
 	"};\n\n");
 
     fprintf(out, "\t/// @{ defines to have human readable font files\n");
@@ -71,9 +73,12 @@ void CreateFontHeaderFile(FILE * out)
 
 //////////////////////////////////////////////////////////////////////////////
 
-//
-//	Print header for c file.
-//
+///
+///	Print header for c file.
+///
+///	@param out	File handle for output
+///	@param name	Font variable name in C source file
+///
 void Header(FILE * out, const char *name)
 {
     fprintf(out,
