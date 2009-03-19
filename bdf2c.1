@@ -1,5 +1,26 @@
+.\"
+.\"	bdf2c.1		 	bdf2c man page
+.\"
+.\"	Copyright (c) 2009 by Johns.  All Rights Reserved.
+.\"
+.\"	Contributor(s):
+.\"
+.\"	License: AGPLv3
+.\"
+.\"	This program is free software: you can redistribute it and/or modify
+.\"	it under the terms of the GNU Affero General Public License as
+.\"	published by the Free Software Foundation, either version 3 of the
+.\"	License.
+.\"
+.\"	This program is distributed in the hope that it will be useful,
+.\"	but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"	GNU Affero General Public License for more details.
+.\"
+.\"	$Id: $
+.\" ------------------------------------------------------------------------
 .pc
-.TH "bdf2c" 1 "2009-02-16" "1" "bdf2c Manual"
+.TH "bdf2c" 1 "2009-03-19" "1" "bdf2c Manual"
 
 .SH NAME
 bdf2c \- converts bdf font files into C include files
@@ -11,6 +32,7 @@ bdf2c \- converts bdf font files into C include files
 .I [-c]
 .I [-C file]
 .I [-n name]
+.I [-O]
 
 .SH DESCRIPTION
 
@@ -34,7 +56,9 @@ Read and convert bdf font 'file'.
 .TP
 .B -n name
 Name of the C font structure. 'name' should contain only valid identifier characters.  f.e. font9x15b
-
+.TP
+.B -O
+Create outline of the font.
 
 .SH AUTHOR
 Johns (2009) <johns98@gmx.net>.

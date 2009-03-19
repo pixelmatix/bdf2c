@@ -36,7 +36,11 @@
 #include <limits.h>
 #include <errno.h>
 
-#define VERSION "2"			///< version of this application
+#define VERSION "3"			///< version of this application
+
+//////////////////////////////////////////////////////////////////////////////
+
+int Outline;				///< true generate outlined font
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -103,7 +107,7 @@ void WidthTable(FILE * out, const char *name, const unsigned *width_table,
 	"\t/// character width for each encoding\n"
 	"static const unsigned char __%s_widths__[] = {\n", name);
     while (chars--) {
-	printf("\t%u,\n", *width_table++);
+	fprintf(out, "\t%u,\n", *width_table++);
     }
 }
 
@@ -119,7 +123,7 @@ void EncodingTable(FILE * out, const char *name,
 	"\t/// character encoding for each index entry\n"
 	"static const unsigned short __%s_index__[] = {\n", name);
     while (chars--) {
-	printf("\t%u,\n", *encoding_table++);
+	fprintf(out, "\t%u,\n", *encoding_table++);
     }
 }
 
@@ -140,10 +144,154 @@ void Footer(FILE * out, const char *name, int width, int height, int chars)
     fprintf(out, "};\n\n");
 }
 
-//
-//	Read BDF font file.
-//
-void ReadBdf(FILE * bdf, const char *name)
+///
+///	Dump character.
+///
+void DumpCharacter(FILE * out, unsigned char *bitmap, int width, int height)
+{
+    int x;
+    int y;
+    int c;
+
+    for (y = 0; y < height; ++y) {
+	fputc('\t', out);
+	for (x = 0; x < width; x += 8) {
+	    c = bitmap[y * ((width + 7) / 8) + x / 8];
+	    //printf("%d = %d\n", y * ((width+7)/8) + x/8, c);
+	    if (c & 0x80) {
+		fputc('X', out);
+	    } else {
+		fputc('_', out);
+	    }
+	    if (c & 0x40) {
+		fputc('X', out);
+	    } else {
+		fputc('_', out);
+	    }
+	    if (c & 0x20) {
+		fputc('X', out);
+	    } else {
+		fputc('_', out);
+	    }
+	    if (c & 0x10) {
+		fputc('X', out);
+	    } else {
+		fputc('_', out);
+	    }
+	    if (c & 0x08) {
+		fputc('X', out);
+	    } else {
+		fputc('_', out);
+	    }
+	    if (c & 0x04) {
+		fputc('X', out);
+	    } else {
+		fputc('_', out);
+	    }
+	    if (c & 0x02) {
+		fputc('X', out);
+	    } else {
+		fputc('_', out);
+	    }
+	    if (c & 0x01) {
+		fputc('X', out);
+	    } else {
+		fputc('_', out);
+	    }
+	    fputc(',', out);
+	}
+	fputc('\n', out);
+    }
+}
+
+///
+///	Hex ascii to integer
+///
+static inline int Hex2Int(const char *p)
+{
+    if (*p <= '9') {
+	return *p - '0';
+    } else if (*p <= 'F') {
+	return *p - 'A' + 10;
+    } else {
+	return *p - 'a' + 10;
+    }
+}
+
+///
+///	Rotate bitmap.
+///
+void RotateBitmap(unsigned char *bitmap, int shift, int width, int height)
+{
+    int x;
+    int y;
+    int c;
+    int o;
+
+    if (shift < 0 || shift > 7) {
+	fprintf(stderr, "This shift isn't supported\n");
+	exit(-1);
+    }
+
+    for (y = 0; y < height; ++y) {
+	o = 0;
+	for (x = 0; x < width; x += 8) {
+	    c = bitmap[y * ((width + 7) / 8) + x / 8];
+	    bitmap[y * ((width + 7) / 8) + x / 8] = c >> shift | o;
+	    o = c << (8 - shift);
+	}
+    }
+}
+
+///
+///	Outline character.
+///
+void OutlineCharacter(unsigned char *bitmap, int width, int height)
+{
+    int x;
+    int y;
+    unsigned char *outline;
+
+    outline = alloca(((width + 7) / 8) * height);
+    memset(outline, 0, ((width + 7) / 8) * height);
+    for (y = 0; y < height; ++y) {
+	for (x = 0; x < width; ++x) {
+	    // Bit not set check surroundings
+	    if (~bitmap[y * ((width + 7) / 8) + x / 8] & (0x80 >> x % 8)) {
+		// Upper row bit was set
+		if (y
+		    && bitmap[(y - 1) * ((width + 7) / 8) +
+			x / 8] & (0x80 >> x % 8)) {
+		    outline[y * ((width + 7) / 8) + x / 8] |= (0x80 >> x % 8);
+		    // Previous bit was set
+		} else if (x
+		    && bitmap[y * ((width + 7) / 8) + (x -
+			    1) / 8] & (0x80 >> (x - 1) % 8)) {
+		    outline[y * ((width + 7) / 8) + x / 8] |= (0x80 >> x % 8);
+		    // Next bit was set
+		} else if (x < width - 1
+		    && bitmap[y * ((width + 7) / 8) + (x +
+			    1) / 8] & (0x80 >> (x + 1) % 8)) {
+		    outline[y * ((width + 7) / 8) + x / 8] |= (0x80 >> x % 8);
+		    // below row was set
+		} else if (y < height - 1
+		    && bitmap[(y + 1) * ((width + 7) / 8) +
+			x / 8] & (0x80 >> x % 8)) {
+		    outline[y * ((width + 7) / 8) + x / 8] |= (0x80 >> x % 8);
+		}
+	    }
+	}
+    }
+    memcpy(bitmap, outline, ((width + 7) / 8) * height);
+}
+
+///
+///	Read BDF font file.
+///
+///
+///	@todo bbx isn't used to correct character position in bitmap
+///
+void ReadBdf(FILE * bdf, FILE * out, const char *name)
 {
     char linebuf[1024];
     char *s;
@@ -152,6 +300,7 @@ void ReadBdf(FILE * bdf, const char *name)
     int fontboundingbox_height;
     int chars;
     int i;
+    int j;
     int n;
     int scanline;
     char charname[1024];
@@ -163,6 +312,7 @@ void ReadBdf(FILE * bdf, const char *name)
     int width;
     unsigned *width_table;
     unsigned *encoding_table;
+    unsigned char *bitmap;
 
     fontboundingbox_width = 0;
     fontboundingbox_height = 0;
@@ -190,11 +340,24 @@ void ReadBdf(FILE * bdf, const char *name)
        printf("%d * %dx%d\n", chars, fontboundingbox_width,
        fontboundingbox_height);
      */
-
+    //
+    //	Some checks.
+    //
+    if (fontboundingbox_width <= 0 || fontboundingbox_height <= 0) {
+	fprintf(stderr, "Need to know the character size\n");
+	exit(-1);
+    }
     if (chars <= 0) {
 	fprintf(stderr, "Need to know the number of characters\n");
 	exit(-1);
     }
+    if (Outline) {			// Reserve space for outline border
+	fontboundingbox_width++;
+	fontboundingbox_height++;
+    }
+    //
+    //	Allocate tables
+    //
     width_table = malloc(chars * sizeof(*width_table));
     if (!width_table) {
 	fprintf(stderr, "Out of memory\n");
@@ -205,8 +368,21 @@ void ReadBdf(FILE * bdf, const char *name)
 	fprintf(stderr, "Out of memory\n");
 	exit(-1);
     }
+    /*	FIXME: needed for proportional fonts.
+       offset_table = malloc(chars * sizeof(*offset_table));
+       if (!offset_table) {
+       fprintf(stderr, "Out of memory\n");
+       exit(-1);
+       }
+     */
+    bitmap =
+	malloc(((fontboundingbox_width + 7) / 8) * fontboundingbox_height);
+    if (!bitmap) {
+	fprintf(stderr, "Out of memory\n");
+	exit(-1);
+    }
 
-    Header(stdout, name);
+    Header(out, name);
 
     scanline = -1;
     n = 0;
@@ -244,56 +420,90 @@ void ReadBdf(FILE * bdf, const char *name)
 	    p = strtok(NULL, " \t\n\r");
 	    bby = atoi(p);
 	} else if (!strcasecmp(s, "BITMAP")) {
-	    fprintf(stdout, "// %3d $%02x '%s'\n", encoding, encoding,
-		charname);
-	    fprintf(stdout, "//\twidth %d, bbx %d, bby %d, bbw %d, bbh %d\n",
+	    fprintf(out, "// %3d $%02x '%s'\n", encoding, encoding, charname);
+	    fprintf(out, "//\twidth %d, bbx %d, bby %d, bbw %d, bbh %d\n",
 		width, bbx, bby, bbw, bbh);
 
 	    if (n == chars) {
 		fprintf(stderr, "Too many bitmaps for characters\n");
 		exit(-1);
 	    }
+	    if (width == INT_MIN) {
+		fprintf(stderr, "character width not specified\n");
+		exit(-1);
+	    }
+	    //
+	    //	Adjust width based on bounding box
+	    //
+	    if (bbx < 0) {
+		width -= bbx;
+		bbx = 0;
+	    }
+	    if (bbx + bbw > width) {
+		width = bbx + bbw;
+	    }
+	    if (Outline) {		// Reserve space for outline border
+		++width;
+	    }
 	    width_table[n] = width;
 	    encoding_table[n] = encoding;
 	    ++n;
-	    scanline = 0;
+	    if (Outline) {		// Leave first row empty
+		scanline = 1;
+	    } else {
+		scanline = 0;
+	    }
+	    memset(bitmap, 0,
+		((fontboundingbox_width + 7) / 8) * fontboundingbox_height);
 	} else if (!strcasecmp(s, "ENDCHAR")) {
+	    if (bbx) {
+		RotateBitmap(bitmap, bbx, fontboundingbox_width,
+		    fontboundingbox_height);
+	    }
+	    if (Outline) {
+		RotateBitmap(bitmap, 1, fontboundingbox_width,
+		    fontboundingbox_height);
+		OutlineCharacter(bitmap, fontboundingbox_width,
+		    fontboundingbox_height);
+	    }
+	    DumpCharacter(out, bitmap, fontboundingbox_width,
+		fontboundingbox_height);
 	    scanline = -1;
+	    width = INT_MIN;
 	} else {
 	    if (scanline >= 0) {
 		p = s;
-		fprintf(stdout, "\t");
+		j = 0;
 		while (*p) {
-		    if (*p <= '9') {
-			i = *p - '0';
-		    } else if (*p <= 'F') {
-			i = *p - 'A' + 10;
-		    } else {
-			i = *p - 'a' + 10;
-		    }
-		    fprintf(stdout, "%c%c%c%c", (i & 0x08) ? 'X' : '_',
-			(i & 0x04) ? 'X' : '_', (i & 0x02) ? 'X' : '_',
-			(i & 0x01) ? 'X' : '_');
+		    i = Hex2Int(p);
 		    ++p;
-		    if (~(p - s) & 1) {
-			fprintf(stdout, ",");
+		    if (*p) {
+			i = Hex2Int(p) | i * 16;
+		    } else {
+			bitmap[j + scanline * ((fontboundingbox_width +
+				    7) / 8)] = i;
+			break;
 		    }
+		    /* printf("%d = %d\n", 
+		       j + scanline * ((fontboundingbox_width + 7)/8), i); */
+		    bitmap[j + scanline * ((fontboundingbox_width + 7) / 8)] =
+			i;
+		    ++j;
+		    ++p;
 		}
-		if ((p - s) & 1) {	// fill last nibble
-		    fprintf(stdout, "____,");
-		}
-		fprintf(stdout, "\n");
 		++scanline;
 	    }
 	}
     }
 
     // Output width table for proportional font.
-    WidthTable(stdout, name, width_table, chars);
+    WidthTable(out, name, width_table, chars);
+    // FIXME: Output offset table for proportional font.
+    // OffsetTable(out, name, offset_table, chars);
     // Output encoding table for utf-8 support
-    EncodingTable(stdout, name, encoding_table, chars);
+    EncodingTable(out, name, encoding_table, chars);
 
-    Footer(stdout, name, fontboundingbox_width, fontboundingbox_height, chars);
+    Footer(out, name, fontboundingbox_width, fontboundingbox_height, chars);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -316,8 +526,9 @@ void PrintUsage(void)
     printf("Usage: bdf2c [OPTIONs]\n" "\t-b\tRead bdf file from stdin\n"
 	"\t-c\tCreate font header on stdout\n"
 	"\t-C file\tCreate font header file\n"
-	"\t-n name\tName of c font variable (place it before -b)\n");
-    printf("\tOnly idiots print usage on stderr\n");
+	"\t-n name\tName of c font variable (place it before -b)\n"
+	"-t-O\tCreate outline for the font.\n");
+    printf("\n\tOnly idiots print usage on stderr\n");
 }
 
 //
@@ -332,9 +543,9 @@ int main(int argc, char *const argv[])
     //	Parse arguments.
     //
     for (;;) {
-	switch (getopt(argc, argv, "bcC:n:h?-")) {
+	switch (getopt(argc, argv, "bcC:n:hO?-")) {
 	    case 'b':
-		ReadBdf(stdin, name);
+		ReadBdf(stdin, stdout, name);
 		continue;
 	    case 'c':
 		CreateFontHeaderFile(stdout);
@@ -354,6 +565,9 @@ int main(int argc, char *const argv[])
 		continue;
 	    case 'n':
 		name = optarg;
+		continue;
+	    case 'O':
+		Outline = 1;
 		continue;
 
 	    case EOF:
