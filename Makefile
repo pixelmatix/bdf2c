@@ -26,7 +26,7 @@ LDFLAGS	=
 
 OBJS	=	bdf2c.o
 HDRS	=	
-FILES	=	Makefile AGPL-3.0.txt README.txt Changlog.txt
+FILES	=	Makefile AGPL-3.0.txt README.txt Changelog.txt
 
 all:	bdf2c
 
