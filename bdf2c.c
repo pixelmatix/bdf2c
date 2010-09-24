@@ -28,6 +28,49 @@
 ///		storing bitmap fonts. The content is presented as a text file
 ///		that is intended to be human and computer readable.
 ///
+///	BDF input:
+///	@code
+///	STARTCHAR A
+///	ENCODING 65
+///	SWIDTH 568 0
+///	DWIDTH 8 0
+///	BBX 8 13 0 -2
+///	BITMAP
+///	00
+///	38
+///	7C
+///	C6
+///	C6
+///	C6
+///	FE
+///	C6
+///	C6
+///	C6
+///	C6
+///	00
+///	00
+///	ENDCHAR
+///	@endcode
+///
+///	The result looks like this:
+///	@code
+///	//  65 $41 'A'
+///	//	width 8, bbx 0, bby -2, bbw 8, bbh 13
+///	    ________,
+///	    __XXX___,
+///	    _XXXXX__,
+///	    XX___XX_,
+///	    XX___XX_,
+///	    XX___XX_,
+///	    XXXXXXX_,
+///	    XX___XX_,
+///	    XX___XX_,
+///	    XX___XX_,
+///	    XX___XX_,
+///	    ________,
+///	    ________,
+///	@endcode
+///
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +79,7 @@
 #include <limits.h>
 #include <errno.h>
 
-#define VERSION "3"			///< version of this application
+#define VERSION "4"			///< version of this application
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -322,7 +365,7 @@ void OutlineCharacter(unsigned char *bitmap, int width, int height)
 ///
 ///	Read BDF font file.
 ///
-///	@paran bdf	file stream for input (bdf file)
+///	@param bdf	file stream for input (bdf file)
 ///	@param out	file stream for output (C source file)
 ///	@param name	font variable name in C source file
 ///
