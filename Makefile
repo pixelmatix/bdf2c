@@ -1,7 +1,7 @@
 #
-#	@file Makefile		bdf2c
+#	@file Makefile	@brief bdf2c - converts bdf font files into C files
 #
-#	Copyright (c) 2009 by Johns.  All Rights Reserved.
+#	Copyright (c) 2009, 2010 by Lutz Sammer.  All Rights Reserved.
 #
 #	Contributor(s): 
 #
@@ -26,26 +26,44 @@ LDFLAGS	=
 
 OBJS	=	bdf2c.o
 HDRS	=	
-MISC	=	font.h Makefile agpl-3.0.txt readme.txt
+FILES	=	Makefile AGPL-3.0.txt README.txt Changlog.txt
 
 all:	bdf2c
 
-$(OBJS):	$(HDRS)
+$(OBJS):	$(HDRS) Makefile
 
-utv:	$(OBJS)
+bdf2c:	$(OBJS)
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^ $(LIBS) 
-
-clean:
-	-rm *.o *~
 
 #----------------------------------------------------------------------------
 #	Developer tools
+
+doc:    $(SRCS) $(HDRS) bdf2c.doxyfile
+	(cat bdf2c.doxyfile; \
+	echo 'PROJECT_NUMBER=${VERSION} $(if $(GIT_REV), (GIT-$(GIT_REV)))') \
+	| doxygen -
 
 indent:
 	for i in $(OBJS:.o=.c) $(HDRS); do \
 		indent $$i; unexpand -a $$i > $$i.up; mv $$i.up $$i; \
 	done
 
-commit:
-	git commit $(OBJS:.o=.c) $(HDRS) $(MISC)
+clean:
+	-rm *.o *~
 
+clobber:	clean
+	-rm bdf2c
+
+dist:
+	tar cjCf .. bdf2c-`date +%F-%H`.tar.bz2 \
+		$(addprefix bdf2c/, $(FILES) $(OBJS:.o=.c))
+
+install:
+	strip --strip-unneeded -R .comment bdf2c
+	install -s bdf2c /usr/local/bin/
+
+commit:
+	git commit $(OBJS:.o=.c) $(HDRS) $(FILES)
+
+help:
+	@echo "make all|doc|indent|clean|clobber|dist|install|help"

@@ -1,7 +1,7 @@
 ///
-///	@file bdf2c.c		 BDF Font to C source convertor
+///	@file bdf2c.c		@brief BDF Font to C source convertor
 ///
-///	Copyright (c) 2009 by Johns.  All Rights Reserved.
+///	Copyright (c) 2009, 2010 by Lutz Sammer.  All Rights Reserved.
 ///
 ///	Contributor(s): 
 ///
@@ -47,14 +47,14 @@ int Outline;				///< true generate outlined font
 ///
 ///	Create our header file.
 ///
-///	@param out	File handle for output
+///	@param out	file stream for output
 ///
 void CreateFontHeaderFile(FILE * out)
 {
     register int i;
 
-    fprintf(out, "// (c) 2009 Johns, License: AGPLv3\n\n");
     fprintf(out,
+	"// (c) 2009, 2010 Lutz Sammer, License: AGPLv3\n\n"
 	"\t/// bitmap font structure\n" "struct bitmap_font {\n"
 	"\tunsigned char Width;\t\t///< max. character width\n"
 	"\tunsigned char Height;\t\t///< character height\n"
@@ -80,13 +80,13 @@ void CreateFontHeaderFile(FILE * out)
 ///
 ///	Print header for c file.
 ///
-///	@param out	File handle for output
-///	@param name	Font variable name in C source file
+///	@param out	file stream for output
+///	@param name	font variable name in C source file
 ///
 void Header(FILE * out, const char *name)
 {
     fprintf(out,
-	"// Created from bdf2c Version %s, (c) 2009 by Johns\n"
+	"// Created from bdf2c Version %s, (c) 2009, 2010 by Lutz Sammer\n"
 	"//\tLicense AGPLv3: GNU Affero General Public License version 3\n"
 	"\n#include \"font.h\"\n\n", VERSION);
 
@@ -95,9 +95,14 @@ void Header(FILE * out, const char *name)
 	"static const unsigned char __%s_bitmap__[] = {\n", name);
 }
 
-//
-//	Print width table for c file
-//
+///
+///	Print width table for c file
+///
+///	@param out		file stream for output
+///	@param name		font variable name in C source file
+///	@param width_table	width table read from BDF file
+///	@param chars		number of characters in width table
+///
 void WidthTable(FILE * out, const char *name, const unsigned *width_table,
     int chars)
 {
@@ -111,9 +116,14 @@ void WidthTable(FILE * out, const char *name, const unsigned *width_table,
     }
 }
 
-//
-//	Print encoding table for c file
-//
+///
+///	Print encoding table for c file
+///
+///	@param out		file stream for output
+///	@param name		font variable name in C source file
+///	@param encoding_table	encoding table read from BDF file
+///	@param chars		number of characters in encoding table
+///
 void EncodingTable(FILE * out, const char *name,
     const unsigned *encoding_table, int chars)
 {
@@ -127,9 +137,15 @@ void EncodingTable(FILE * out, const char *name,
     }
 }
 
-//
-//	Print footer for c file.
-//
+///
+///	Print footer for c file.
+///
+///	@param out		file stream for output
+///	@param name		font variable name in C source file
+///	@param width		character width of font
+///	@param height		character height of font
+///	@param chars		number of characters in font
+///
 void Footer(FILE * out, const char *name, int width, int height, int chars)
 {
     fprintf(out, "};\n\n");
@@ -146,6 +162,11 @@ void Footer(FILE * out, const char *name, int width, int height, int chars)
 
 ///
 ///	Dump character.
+///
+///	@param out	file stream for output
+///	@param bitmap	input bitmap
+///	@param width	character width
+///	@param height	character height
 ///
 void DumpCharacter(FILE * out, unsigned char *bitmap, int width, int height)
 {
@@ -207,6 +228,10 @@ void DumpCharacter(FILE * out, unsigned char *bitmap, int width, int height)
 ///
 ///	Hex ascii to integer
 ///
+///	@param p	hex input character (0-9a-fA-F)
+///
+///	@returns converted integer
+///
 static inline int Hex2Int(const char *p)
 {
     if (*p <= '9') {
@@ -220,6 +245,11 @@ static inline int Hex2Int(const char *p)
 
 ///
 ///	Rotate bitmap.
+///
+///	@param bitmap	input bitmap
+///	@param shift	rotate counter (0-7)
+///	@param width	character width
+///	@param height	character height
 ///
 void RotateBitmap(unsigned char *bitmap, int shift, int width, int height)
 {
@@ -244,7 +274,11 @@ void RotateBitmap(unsigned char *bitmap, int shift, int width, int height)
 }
 
 ///
-///	Outline character.
+///	Outline character.  Create an outline font from normal fonts.
+///
+///	@param bitmap	input bitmap
+///	@param width	character width
+///	@param height	character height
 ///
 void OutlineCharacter(unsigned char *bitmap, int width, int height)
 {
@@ -288,6 +322,9 @@ void OutlineCharacter(unsigned char *bitmap, int width, int height)
 ///
 ///	Read BDF font file.
 ///
+///	@paran bdf	file stream for input (bdf file)
+///	@param out	file stream for output (C source file)
+///	@param name	font variable name in C source file
 ///
 ///	@todo bbx isn't used to correct character position in bitmap
 ///
@@ -508,49 +545,55 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
 
 //////////////////////////////////////////////////////////////////////////////
 
-//
-//	Print version
-//
+///
+///	Print version
+///
 void PrintVersion(void)
 {
-    printf("bdf2c Version %s, (c) 2009 by Johns\n"
+    printf("bdf2c Version %s, (c) 2009, 2010 by Lutz Sammer\n"
 	"\tLicense AGPLv3: GNU Affero General Public License version 3\n",
 	VERSION);
 }
 
-//
-//	Print usage
-//
+///
+///	Print usage
+///
 void PrintUsage(void)
 {
-    printf("Usage: bdf2c [OPTIONs]\n" "\t-b\tRead bdf file from stdin\n"
+    printf("Usage: bdf2c [OPTIONs]\n"
+	"\t-h or -?\tPrints this short page on stdout\n"
+	"\t-b\tRead bdf file from stdin, write to stdout\n"
 	"\t-c\tCreate font header on stdout\n"
 	"\t-C file\tCreate font header file\n"
 	"\t-n name\tName of c font variable (place it before -b)\n"
-	"-t-O\tCreate outline for the font.\n");
+	"\t-O\tCreate outline for the font.\n");
     printf("\n\tOnly idiots print usage on stderr\n");
 }
 
-//
-//	Main test program for bdf2c.
-//
+///
+///	Main test program for bdf2c.
+///
+///
+///	@param argc	number of arguments
+///	@param argv	arguments vector
+///
 int main(int argc, char *const argv[])
 {
     const char *name;
 
-    name = "font";
+    name = "font";			// default variable name
     //
     //	Parse arguments.
     //
     for (;;) {
 	switch (getopt(argc, argv, "bcC:n:hO?-")) {
-	    case 'b':
+	    case 'b':			// bdf file name
 		ReadBdf(stdin, stdout, name);
 		continue;
-	    case 'c':
+	    case 'c':			// create header file
 		CreateFontHeaderFile(stdout);
 		break;
-	    case 'C':
+	    case 'C':			// create header file
 	    {
 		FILE *out;
 

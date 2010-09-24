@@ -1,3 +1,4 @@
 # gitattributes(5) file
-*.[ch]	ident
+*.[ch1]		ident
 Makefile	ident
+README.txt	ident
