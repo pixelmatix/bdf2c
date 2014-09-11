@@ -84,6 +84,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 int Outline;				///< true generate outlined font
+int SmartMatrix;            // modify output to be used in the SmartMatrix library
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -128,10 +129,16 @@ void CreateFontHeaderFile(FILE * out)
 ///
 void Header(FILE * out, const char *name)
 {
+    char * headername;
+    if(!SmartMatrix)
+        headername = "font";
+    else
+        headername = "MatrixFontCommon";
+
     fprintf(out,
 	"// Created from bdf2c Version %s, (c) 2009, 2010 by Lutz Sammer\n"
 	"//\tLicense AGPLv3: GNU Affero General Public License version 3\n"
-	"\n#include \"font.h\"\n\n", VERSION);
+	"\n#include \"%s.h\"\n\n", VERSION, headername);
 
     fprintf(out,
 	"\t/// character bitmap for each encoding\n"
@@ -197,7 +204,12 @@ void Footer(FILE * out, const char *name, int width, int height, int chars)
 	name);
     fprintf(out, "\t.Width = %d, .Height = %d,\n", width, height);
     fprintf(out, "\t.Chars = %d,\n", chars);
-    fprintf(out, "\t.Widths = __%s_widths__,\n", name);
+
+    if(!SmartMatrix)
+        fprintf(out, "\t.Widths = __%s_widths__,\n", name);
+    else
+        fprintf(out, "\t.Widths = 0,\n");
+
     fprintf(out, "\t.Index = __%s_index__,\n", name);
     fprintf(out, "\t.Bitmap = __%s_bitmap__,\n", name);
     fprintf(out, "};\n\n");
@@ -589,7 +601,8 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
     }
 
     // Output width table for proportional font.
-    WidthTable(out, name, width_table, chars);
+    if(!SmartMatrix)
+        WidthTable(out, name, width_table, chars);
     // FIXME: Output offset table for proportional font.
     // OffsetTable(out, name, offset_table, chars);
     // Output encoding table for utf-8 support
@@ -641,7 +654,7 @@ int main(int argc, char *const argv[])
     //	Parse arguments.
     //
     for (;;) {
-	switch (getopt(argc, argv, "bcC:n:hO?-")) {
+	switch (getopt(argc, argv, "bcC:n:hOs?-")) {
 	    case 'b':			// bdf file name
 		ReadBdf(stdin, stdout, name);
 		continue;
@@ -667,6 +680,9 @@ int main(int argc, char *const argv[])
 	    case 'O':
 		Outline = 1;
 		continue;
+        case 's':
+        SmartMatrix = 1;
+        continue;
 
 	    case EOF:
 		break;
