@@ -3,7 +3,7 @@
 ///
 ///	Copyright (c) 2009, 2010 by Lutz Sammer.  All Rights Reserved.
 ///
-///	Contributor(s): 
+///	Contributor(s):
 ///
 ///	License: AGPLv3
 ///
@@ -206,21 +206,25 @@ void Footer(FILE * out, const char *name, int width, int height, int chars)
 ///
 ///	Dump character.
 ///
-///	@param out	file stream for output
-///	@param bitmap	input bitmap
-///	@param width	character width
-///	@param height	character height
 ///
-void DumpCharacter(FILE * out, unsigned char *bitmap, int width, int height)
+void DumpCharacter(FILE * out, unsigned char *bitmap, int fontwidth, int fontheight, int fontyoffset, int charheight, int charyoffset)
 {
     int x;
     int y;
     int c;
 
-    for (y = 0; y < height; ++y) {
+    // how many rows from the top of the font bounding box is the top of this character?
+    int yoffset = fontheight - charheight + (fontyoffset - charyoffset);
+
+    for (y = 0; y < fontheight; ++y) {
 	fputc('\t', out);
-	for (x = 0; x < width; x += 8) {
-	    c = bitmap[y * ((width + 7) / 8) + x / 8];
+	for (x = 0; x < fontwidth; x += 8) {
+        // if current row is above or below the bitmap, output a blank row
+        if(y < yoffset || y > yoffset + charheight)
+            c = 0;
+        else
+            c = bitmap[(y - yoffset) * ((fontwidth + 7) / 8) + x / 8];
+
 	    //printf("%d = %d\n", y * ((width+7)/8) + x/8, c);
 	    if (c & 0x80) {
 		fputc('X', out);
@@ -378,6 +382,8 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
     char *p;
     int fontboundingbox_width;
     int fontboundingbox_height;
+    int fontboundingbox_xoff;
+    int fontboundingbox_yoff;
     int chars;
     int i;
     int j;
@@ -396,6 +402,8 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
 
     fontboundingbox_width = 0;
     fontboundingbox_height = 0;
+    fontboundingbox_xoff = 0;
+    fontboundingbox_yoff = 0;
     chars = 0;
     for (;;) {
 	if (!fgets(linebuf, sizeof(linebuf), bdf)) {	// EOF
@@ -410,6 +418,10 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
 	    fontboundingbox_width = atoi(p);
 	    p = strtok(NULL, " \t\n\r");
 	    fontboundingbox_height = atoi(p);
+        p = strtok(NULL, " \t\n\r");
+        fontboundingbox_xoff = atoi(p);
+        p = strtok(NULL, " \t\n\r");
+        fontboundingbox_yoff = atoi(p);
 	} else if (!strcasecmp(s, "CHARS")) {
 	    p = strtok(NULL, " \t\n\r");
 	    chars = atoi(p);
@@ -547,7 +559,7 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
 		    fontboundingbox_height);
 	    }
 	    DumpCharacter(out, bitmap, fontboundingbox_width,
-		fontboundingbox_height);
+		fontboundingbox_height, fontboundingbox_yoff, bbh, bby);
 	    scanline = -1;
 	    width = INT_MIN;
 	} else {
@@ -564,7 +576,7 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
 				    7) / 8)] = i;
 			break;
 		    }
-		    /* printf("%d = %d\n", 
+		    /* printf("%d = %d\n",
 		       j + scanline * ((fontboundingbox_width + 7)/8), i); */
 		    bitmap[j + scanline * ((fontboundingbox_width + 7) / 8)] =
 			i;
