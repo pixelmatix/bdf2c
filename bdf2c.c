@@ -98,7 +98,7 @@ void CreateFontHeaderFile(FILE * out)
     register int i;
 
     fprintf(out,
-	"// (c) 2009, 2010 Lutz Sammer, License: AGPLv3\n\n"
+	"// Created with bdf2c Version %s, (c) 2009, 2010 by Lutz Sammer\n\n"
 	"\t/// bitmap font structure\n" "struct bitmap_font {\n"
 	"\tunsigned char Width;\t\t///< max. character width\n"
 	"\tunsigned char Height;\t\t///< character height\n"
@@ -106,7 +106,7 @@ void CreateFontHeaderFile(FILE * out)
 	"\tconst unsigned char *Widths;\t///< width of each character\n"
 	"\tconst unsigned short *Index;\t///< encoding to character index\n"
 	"\tconst unsigned char *Bitmap;\t///< bitmap of all characters\n"
-	"};\n\n");
+	"};\n\n", VERSION);
 
     fprintf(out, "\t/// @{ defines to have human readable font files\n");
     for (i = 0; i < 256; ++i) {
@@ -136,8 +136,7 @@ void Header(FILE * out, const char *name)
         headername = "MatrixFontCommon";
 
     fprintf(out,
-	"// Created from bdf2c Version %s, (c) 2009, 2010 by Lutz Sammer\n"
-	"//\tLicense AGPLv3: GNU Affero General Public License version 3\n"
+	"// Created with bdf2c Version %s, (c) 2009, 2010 by Lutz Sammer\n"
 	"\n#include \"%s.h\"\n\n", VERSION, headername);
 
     fprintf(out,
@@ -232,10 +231,10 @@ void DumpCharacter(FILE * out, unsigned char *bitmap, int fontwidth, int fonthei
 	fputc('\t', out);
 	for (x = 0; x < fontwidth; x += 8) {
         // if current row is above or below the bitmap, output a blank row
-        if(y < yoffset || y > yoffset + charheight)
-            c = 0;
-        else
-            c = bitmap[(y - yoffset) * ((fontwidth + 7) / 8) + x / 8];
+        if(y < yoffset || y > yoffset + charheight){
+            c = 0;}
+        else{
+            c = bitmap[(y - yoffset) * ((fontwidth + 7) / 8) + x / 8];}
 
 	    //printf("%d = %d\n", y * ((width+7)/8) + x/8, c);
 	    if (c & 0x80) {
@@ -394,7 +393,7 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
     char *p;
     int fontboundingbox_width;
     int fontboundingbox_height;
-    int fontboundingbox_xoff;
+//    int fontboundingbox_xoff;
     int fontboundingbox_yoff;
     int chars;
     int i;
@@ -414,7 +413,7 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
 
     fontboundingbox_width = 0;
     fontboundingbox_height = 0;
-    fontboundingbox_xoff = 0;
+//    fontboundingbox_xoff = 0;
     fontboundingbox_yoff = 0;
     chars = 0;
     for (;;) {
@@ -431,7 +430,7 @@ void ReadBdf(FILE * bdf, FILE * out, const char *name)
 	    p = strtok(NULL, " \t\n\r");
 	    fontboundingbox_height = atoi(p);
         p = strtok(NULL, " \t\n\r");
-        fontboundingbox_xoff = atoi(p);
+//        fontboundingbox_xoff = atoi(p);
         p = strtok(NULL, " \t\n\r");
         fontboundingbox_yoff = atoi(p);
 	} else if (!strcasecmp(s, "CHARS")) {
