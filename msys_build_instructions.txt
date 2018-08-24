@@ -1,0 +1,14 @@
+install msys2 http://www.msys2.org
+
+run msys from start menu
+
+install mingw https://stackoverflow.com/questions/30069830/how-to-install-mingw-w64-and-msys2#30071634
+
+add mingw to path, type:
+ export PATH=/mingw32/bin:$PATH
+
+enter to directory of this sourse code, type:
+ cd "c:\path_to_this_folder"
+
+to build, type:
+ make
